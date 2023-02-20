@@ -5,7 +5,10 @@ import numpy as np
 '''
 This module allows user to do post-processings based on the results of Directionality analysis in FIJI.
 
+Functions include read_sample_roi, organise, select_plot, find_max_shift, pseudo_dataset, create_pseudo_boxplot. Further details can be found in the documentation of the specific function.
+
 '''
+
 # 1. Extract all samples and all rois (produced using the same conidtion) to a list of pandas dataframe
 # list layer 1: sample (no.i)
 # list layer 2: roi (no.j)
@@ -103,7 +106,7 @@ def organise(df):
 
 def select_plot(df_list:list, plot_kind:str, width=1.1, roi_list=[1,2,3,4,5], 
                 colour_list=['lightcoral', 'gray', 'cornflowerblue', 'gray', 'lightcoral'], 
-                rotate=90, ):
+                rotate=90):
     
     '''
     This function allows the user to choose certain roi(s) to plot for one sample
@@ -127,7 +130,7 @@ def select_plot(df_list:list, plot_kind:str, width=1.1, roi_list=[1,2,3,4,5],
         x = df_list[i-1].iloc[:,0]
         # Plot histogram plot by using bar plot
         # Convert the direction from 0~180/deg to -90~90/deg
-        plt.bar(np.multiply(np.subtract(x,rot),-1),df_list[i-1][f'total_{plot_kind}'],label=label_list[i-1],
+        plt.bar(np.multiply(np.subtract(x,rotate),-1),df_list[i-1][f'total_{plot_kind}'],label=label_list[i-1],
         width=width,color=colour_list[i-1],linewidth=0)
     
     plt.xlabel('Pore orientation (°)')
@@ -171,7 +174,8 @@ def find_max_shift(df_list:list, method='peak', size=5000):
     
     elif method == 'median':
         for df in df_list:
-            index_list.append(np.median(pseudo_dataset(df, size)))
+            dataset, _ = pseudo_dataset(df, size)
+            index_list.append(np.median(dataset))
         return max(index_list) - min(index_list)
     
     else:
@@ -239,9 +243,13 @@ def create_pseudo_boxplot(df_list:list, size=5000, colour_list=['pink', 'lightgr
         pseudo_ds, _ = pseudo_dataset(df, size)
         pseudo_data_list.append(pseudo_ds)
     
-    bplot = plt.boxplot(pseudo_data_list, patch_artist=True, labels=labels)
+    # styling the median and mean
+    medianprops = dict(linestyle='-.', linewidth=1.5, color='black')
+    meanpointprops = dict(marker='D', markeredgecolor='black', markersize=10, markerfacecolor='firebrick')
     
-    # Fill with colours
+    bplot = plt.boxplot(pseudo_data_list, patch_artist=True, labels=labels, showfliers=False, showmeans=True, medianprops=medianprops, meanline=False, meanprops=meanpointprops)
+        
+    # Fill the box with colours
     for patch, color in zip(bplot['boxes'], colour_list):
         patch.set_facecolor(color)
  
